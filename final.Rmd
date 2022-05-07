@@ -1,0 +1,91 @@
+---
+title: "ISTA 320 Final Project"
+author: "Davin Bush"
+date: "May 6, 2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE) 
+library(ggthemes)
+library(knitr)
+library(RColorBrewer)
+library(tidyverse)
+```
+
+## Data
+
+This dataset is from [kaggle](https://www.kaggle.com/datasets/deepcontractor/top-video-games-19952021-metacritic). It contains video game Metacritic user and critic review scores, along with various information about the video game itself, including release date, platform, and a summary for all games released from 1995-2021.
+
+```{r, echo=FALSE}
+all_games = read.csv("data/all_games.csv")
+all_games = all_games %>%
+  mutate(release_date = gsub(",", " ", release_date)) %>%
+  mutate(release_date = format(as.Date(release_date, "%B %d %Y"), "%m-%d-%Y"))
+
+```
+
+
+
+## Mean Metascores by Platform
+
+```{r, echo=FALSE}
+mean_scores = all_games %>%
+  group_by(platform) %>%
+  summarize(mean_score = mean(meta_score))
+
+mean_scores %>%
+  ggplot(aes(y = reorder(platform, mean_score),
+             x = mean_score,
+             fill = mean_score)) +
+  labs(x = "Mean Metascore",
+       y = "Platform") +
+  coord_cartesian(c(40, 80)) +
+  geom_col()
+```
+
+## Number of 85+ Scores by Platform
+
+```{r, echo=FALSE}
+high_scores = all_games %>%
+  filter(meta_score > 84) %>%
+  group_by(platform) %>%
+  summarize(n = n())
+
+high_scores %>%
+  ggplot(aes(y = reorder(platform, n),
+             x = n,
+             fill = n)) +
+  labs(x = "Number of 85+ Scores",
+       y = "Platform") +
+  coord_cartesian(c(0, 550)) +
+  geom_col()
+```
+
+## Average Metascore by Release Year
+
+```{r, echo=FALSE}
+yearly = all_games %>%
+  mutate(release_year = format(as.Date(release_date, "%m-%d-%Y"), "%Y")) %>%
+  group_by(release_year) %>%
+  summarize(mean_score = mean(meta_score))
+
+yearly %>%
+  ggplot(aes(x = as.numeric(release_year),
+             y = mean_score,
+             group=1)) +
+  labs(x = "Release Year",
+       y = "Mean Metascore") +
+  geom_line() +
+  geom_point() 
+```
+
+## Distribution of Metascores
+
+```{r, echo=FALSE}
+all_games %>%
+  ggplot(aes(x = meta_score)) +
+  labs(x = "Metascore",
+       y = "Number of Scores Given") +
+  geom_histogram(binwidth=1, fill="black", color="gray")
+```
